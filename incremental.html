@@ -31,384 +31,309 @@ body { font-family: sans-serif; max-width: 500px; margin: 20px auto; }
 var points = new MetaNum(0);
 var baseRate = new MetaNum(1);
 var lastTime = performance.now();
-
 var upgrades = [];
-
 function reg(up) { upgrades.push(up); }
 
+function metaFactorial(n) {
+  var r = MetaNum.ONE;
+  for (var i = 2; i <= n; i++) r = r.mul(new MetaNum(i));
+  return r;
+}
+
+function computeArrowCount(i) {
+  if (i < 50) {
+    return Math.pow(2, i + 1);
+  }
+  var fi = i - 50;
+  var arg = Math.round(20 + fi * (150 / 49));
+  if (arg > 170) arg = 170;
+  var r = 1;
+  for (var j = 2; j <= arg; j++) {
+    r *= j;
+    if (r >= 1.79e308) return 1.79e308;
+  }
+  return r;
+}
+
+var newArrowCounts = [];
+var newCosts = [];
+var newLevels = [];
+for (var i = 0; i < 100; i++) {
+  newArrowCounts.push(computeArrowCount(i));
+  newLevels.push(0);
+}
+for (var i = 0; i < 50; i++) {
+  newCosts.push(new MetaNum([[1000 + i * 500, 2]]));
+}
+for (var i = 0; i < 50; i++) {
+  var arg = 10 + Math.floor(i * 49 / 49);
+  newCosts.push(metaFactorial(arg).mul(new MetaNum([[500, 2]])));
+}
+
+function formatArrowCount(n) {
+  if (n < 10000) return '' + Math.round(n);
+  return format(new MetaNum(n), 0);
+}
+
 reg({
-  id: 'upgrade1',
-  name: 'Triple Points',
-  max: 5,
+  id: 'upgrade1', name: 'Triple Points', max: 5, _level: 0,
   level: function() { return upgrades[0]._level; },
-  _level: 0,
   cost: function() { return new MetaNum(5).mul(new MetaNum(Math.pow(5, this.level()))); },
   effect: function() { return format(new MetaNum(Math.pow(3, this.level())), 0) + 'x'; },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); this._level++;
-  },
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  buy: function() { var l=this.level(); if(l>=this.max)return; var c=this.cost(); if(points.lt(c))return; points=points.sub(c); this._level++; },
+  label: function() { var l=this.level(); var c=this.cost(); return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
 reg({
-  id: 'upgrade2',
-  name: 'Power Boost',
-  max: 100,
+  id: 'upgrade2', name: 'Power Boost', max: 100, _level: 0,
   level: function() { return upgrades[1]._level; },
-  _level: 0,
   cost: function() { return new MetaNum(20).mul(new MetaNum(Math.pow(1.2, this.level()))); },
   effect: function() { return '^' + Math.pow(1.1, this.level()).toFixed(3); },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); this._level++;
-  },
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  buy: function() { var l=this.level(); if(l>=this.max)return; var c=this.cost(); if(points.lt(c))return; points=points.sub(c); this._level++; },
+  label: function() { var l=this.level(); var c=this.cost(); return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
 reg({
-  id: 'upgrade3',
-  name: 'Super Power',
-  max: 1000,
+  id: 'upgrade3', name: 'Super Power', max: 1000, _level: 0,
   level: function() { return upgrades[2]._level; },
-  _level: 0,
   cost: function() { return new MetaNum('2E32876').pow(new MetaNum(10.1).pow(new MetaNum(this.level()))); },
   effect: function() { return '^' + format(new MetaNum(10).pow(new MetaNum(this.level())), 3); },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); this._level++;
-  },
-  buyMax: function() {
-    var bought = 0;
-    while (this.level() < this.max) {
-      var c = this.cost();
-      if (points.lt(c)) break;
-      points = points.sub(c); this._level++;
-      bought++; if (bought > 10000) break;
-    }
-  },
+  buy: function() { var l=this.level(); if(l>=this.max)return; var c=this.cost(); if(points.lt(c))return; points=points.sub(c); this._level++; },
+  buyMax: function() { var b=0; while(this.level()<this.max){var c=this.cost();if(points.lt(c))break;points=points.sub(c);this._level++;b++;if(b>10000)break;} },
   hasBuyMax: true,
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  label: function() { var l=this.level(); var c=this.cost(); return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
-var u4Level = 0;
-var u4Max = 12;
-var u4Costs = [new MetaNum('1E328752'), new MetaNum('1E3320719'), new MetaNum('2E33550587'), new MetaNum([[3e9, 1]]), new MetaNum([[3e13, 1]]), new MetaNum([[3e20, 1]]), new MetaNum([[4e45, 1]]), new MetaNum([[7e89, 1]]), new MetaNum([[1e121, 1]]), new MetaNum([[2e217, 1]]), new MetaNum([[320.95, 2]]), new MetaNum([[431.903, 2]])];
-var u4Bases = [0, 8, 6, 4, 3, 2, 1.5, 1.4, 1.3, 1.27, 1.25, 1.2];
-var u4Divs = [0, 55, 30, 20, 15, 10, 10, 10, 10, 10, 10, 10];
-
+var u4Level=0, u4Max=12;
+var u4Costs=[new MetaNum('1E328752'),new MetaNum('1E3320719'),new MetaNum('2E33550587'),new MetaNum([[3e9,1]]),new MetaNum([[3e13,1]]),new MetaNum([[3e20,1]]),new MetaNum([[4e45,1]]),new MetaNum([[7e89,1]]),new MetaNum([[1e121,1]]),new MetaNum([[2e217,1]]),new MetaNum([[320.95,2]]),new MetaNum([[431.903,2]])];
+var u4Bases=[0,8,6,4,3,2,1.5,1.4,1.3,1.27,1.25,1.2];
+var u4Divs=[0,55,30,20,15,10,10,10,10,10,10,10];
 function getU4Mult() {
-  if (u4Level === 0 || !points.gt(MetaNum.ZERO)) return MetaNum.ONE;
-  if (u4Level === 1) return points.pow(new MetaNum(0.01));
-  var idx = Math.min(u4Level, u4Bases.length) - 1;
-  var logBase = points.log(new MetaNum(u4Bases[idx]));
-  var mult = MetaNum.pow(new MetaNum(10), logBase.div(new MetaNum(u4Divs[idx])));
-  var cap = new MetaNum([[1050, 2]]);
-  if (mult.gt(cap)) mult = cap;
+  if(u4Level===0||!points.gt(MetaNum.ZERO))return MetaNum.ONE;
+  if(u4Level===1)return points.pow(new MetaNum(0.01));
+  var idx=Math.min(u4Level,u4Bases.length)-1;
+  var logBase=points.log(new MetaNum(u4Bases[idx]));
+  var mult=MetaNum.pow(new MetaNum(10),logBase.div(new MetaNum(u4Divs[idx])));
+  var cap=new MetaNum([[1050,2]]);
+  if(mult.gt(cap))mult=cap;
   return mult;
 }
-
 reg({
-  id: 'upgrade4',
-  name: 'Point Multiplier',
-  max: u4Max,
+  id: 'upgrade4', name: 'Point Multiplier', max: u4Max, _level: 0,
   level: function() { return u4Level; },
-  cost: function() { return u4Level < u4Max ? u4Costs[u4Level] : MetaNum.POSITIVE_INFINITY; },
-  effect: function() { return format(getU4Mult(), 2) + 'x'; },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); u4Level++;
-  },
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  cost: function() { return u4Level<u4Max?u4Costs[u4Level]:MetaNum.POSITIVE_INFINITY; },
+  effect: function() { return format(getU4Mult(),2)+'x'; },
+  buy: function() { var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);u4Level++; },
+  label: function() { var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
-var u5Level = 0;
+var u5Level=0;
 reg({
-  id: 'upgrade5',
-  name: 'Tetration Boost',
-  max: 10,
+  id: 'upgrade5', name: 'Tetration Boost', max: 10, _level: 0,
   level: function() { return u5Level; },
-  cost: function() { return u5Level < 10 ? new MetaNum([[1050, 2]]).tetr(new MetaNum(1.1).pow(new MetaNum(u5Level))) : MetaNum.POSITIVE_INFINITY; },
-  effect: function() { return u5Level > 0 ? '^^' + format(new MetaNum(2).pow(new MetaNum(u5Level)), 0) : '^^1'; },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); u5Level++;
-  },
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  cost: function() { return u5Level<10?new MetaNum([[1050,2]]).tetr(new MetaNum(1.1).pow(new MetaNum(u5Level))):MetaNum.POSITIVE_INFINITY; },
+  effect: function() { return u5Level>0?'^^'+format(new MetaNum(2).pow(new MetaNum(u5Level)),0):'^^1'; },
+  buy: function() { var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);u5Level++; },
+  label: function() { var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
-var u6Level = 0;
-var u6BaseCost = new MetaNum(3).tetr(1026);
+var u6Level=0;
+var u6BaseCost=new MetaNum(3).tetr(1026);
 reg({
-  id: 'upgrade6',
-  name: 'Hyper Boost',
-  max: 10,
+  id: 'upgrade6', name: 'Hyper Boost', max: 10, _level: 0,
   level: function() { return u6Level; },
-  cost: function() { return u6Level < 10 ? u6BaseCost.tetr(new MetaNum(150).pow(new MetaNum(u6Level))) : MetaNum.POSITIVE_INFINITY; },
-  effect: function() { return u6Level > 0 ? '^^' + format(new MetaNum(Math.pow(100000, u6Level)), 0) : '^^1'; },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); u6Level++;
-  },
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  cost: function() { return u6Level<10?u6BaseCost.tetr(new MetaNum(150).pow(new MetaNum(u6Level))):MetaNum.POSITIVE_INFINITY; },
+  effect: function() { return u6Level>0?'^^'+format(new MetaNum(Math.pow(100000,u6Level)),0):'^^1'; },
+  buy: function() { var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);u6Level++; },
+  label: function() { var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
-var u7Level = 0;
+var u7Level=0;
 reg({
-  id: 'upgrade7',
-  name: 'Omni Boost',
-  max: 1,
+  id: 'upgrade7', name: 'Omni Boost', max: 1, _level: 0,
   level: function() { return u7Level; },
-  cost: function() { return u7Level < 1 ? new MetaNum('F1E50') : MetaNum.POSITIVE_INFINITY; },
-  effect: function() { return u7Level > 0 ? '^^^100' : '^^^1'; },
-  buy: function() {
-    var l = this.level(); if (l >= this.max) return;
-    var c = this.cost(); if (points.lt(c)) return;
-    points = points.sub(c); u7Level++;
-  },
-  label: function() {
-    var l = this.level();
-    var c = this.cost();
-    return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-  }
+  cost: function() { return u7Level<1?new MetaNum('F1E50'):MetaNum.POSITIVE_INFINITY; },
+  effect: function() { return u7Level>0?'^^^100':'^^^1'; },
+  buy: function() { var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);u7Level++; },
+  label: function() { var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts'); }
 });
 
-var hyperLevels = [];
-var hyperNames = ['G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-var hyperCostArrowCounts = [];
-var hyperEffectArrowCounts = [];
-var hyperCosts = [];
-for (var i = 0; i < 20; i++) {
+var hyperLevels=[];
+var hyperCostArrowCounts=[];
+var hyperEffectArrowCounts=[];
+var hyperCosts=[];
+for(var i=0;i<20;i++){
   hyperLevels.push(0);
-  hyperCostArrowCounts.push(3 + i);
-  hyperEffectArrowCounts.push(4 + i);
-  hyperCosts.push(MetaNum.arrow(10, 3 + i, 100));
+  hyperCostArrowCounts.push(3+i);
+  hyperEffectArrowCounts.push(4+i);
+  hyperCosts.push(MetaNum.arrow(10,3+i,100));
+}
+for(var i=0;i<20;i++){
+  (function(idx){
+    reg({
+      id:'upgrade'+(8+idx), name:'Hyper-'+(8+idx), max:1, _level:0,
+      level:function(){return hyperLevels[idx];},
+      cost:function(){return hyperLevels[idx]<1?hyperCosts[idx]:MetaNum.POSITIVE_INFINITY;},
+      effect:function(){return '^['+hyperEffectArrowCounts[idx]+']^^100';},
+      buy:function(){var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);hyperLevels[idx]++;},
+      label:function(){var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts');}
+    });
+  })(i);
 }
 
-for (var i = 0; i < 20; i++) {
-  (function(idx) {
+for(var i=0;i<100;i++){
+  (function(idx){
     reg({
-      id: 'upgrade' + (8 + idx),
-      name: 'Hyper-' + (8 + idx),
-      max: 1,
-      level: function() { return hyperLevels[idx]; },
-      cost: function() { return hyperLevels[idx] < 1 ? hyperCosts[idx] : MetaNum.POSITIVE_INFINITY; },
-      effect: function() {
-        var n = hyperEffectArrowCounts[idx];
-        var s = '';
-        for (var j = 0; j < n; j++) s += '^';
-        return s + '100';
-      },
-      buy: function() {
-        var l = this.level(); if (l >= this.max) return;
-        var c = this.cost(); if (points.lt(c)) return;
-        points = points.sub(c); hyperLevels[idx]++;
-      },
-      label: function() {
-        var l = this.level();
-        var c = this.cost();
-        return this.name + ' [' + l + '/' + this.max + '] - ' + this.effect() + ' effect - ' + (l >= this.max ? 'MAXED' : 'Cost: ' + format(c, 0) + ' pts');
-      }
+      id:'upgrade'+(28+idx), name:'Upgrade-'+(28+idx), max:1, _level:0,
+      level:function(){return newLevels[idx];},
+      cost:function(){return newLevels[idx]<1?newCosts[idx]:MetaNum.POSITIVE_INFINITY;},
+      effect:function(){return '^['+formatArrowCount(newArrowCounts[idx])+']^^100';},
+      buy:function(){var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);newLevels[idx]++;},
+      label:function(){var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts');}
     });
   })(i);
 }
 
 function getEffectiveGain() {
-  var mult = new MetaNum(Math.pow(3, upgrades[0].level()));
-  var raw = baseRate.mul(mult);
-  var pw = Math.pow(1.1, upgrades[1].level());
-  if (pw !== 1) raw = raw.pow(new MetaNum(pw));
-  var sp = new MetaNum(10).pow(new MetaNum(upgrades[2].level()));
-  if (sp.gt(MetaNum.ONE)) raw = raw.pow(sp);
-  raw = raw.mul(getU4Mult());
-  if (u5Level > 0 && points.gt(MetaNum.ZERO)) {
-    raw = raw.tetr(new MetaNum(Math.pow(2, u5Level)));
+  var mult=new MetaNum(Math.pow(3,upgrades[0].level()));
+  var raw=baseRate.mul(mult);
+  var pw=Math.pow(1.1,upgrades[1].level());
+  if(pw!==1)raw=raw.pow(new MetaNum(pw));
+  var sp=new MetaNum(10).pow(new MetaNum(upgrades[2].level()));
+  if(sp.gt(MetaNum.ONE))raw=raw.pow(sp);
+  raw=raw.mul(getU4Mult());
+  if(u5Level>0&&points.gt(MetaNum.ZERO))raw=raw.tetr(new MetaNum(Math.pow(2,u5Level)));
+  if(u6Level>0&&points.gt(MetaNum.ZERO))raw=raw.tetr(new MetaNum(Math.pow(100000,u6Level)));
+  if(u7Level>0&&points.gt(MetaNum.ZERO)){
+    var result=raw;
+    for(var i=2;i<=100;i++)result=raw.tetr(result);
+    raw=result;
   }
-  if (u6Level > 0 && points.gt(MetaNum.ZERO)) {
-    raw = raw.tetr(new MetaNum(Math.pow(100000, u6Level)));
-  }
-  if (u7Level > 0 && points.gt(MetaNum.ZERO)) {
-    var result = raw;
-    for (var i = 2; i <= 100; i++) {
-      result = raw.tetr(result);
+  for(var i=0;i<20;i++){
+    if(hyperLevels[i]>0&&points.gt(MetaNum.ZERO)){
+      raw=MetaNum.arrow(raw,hyperEffectArrowCounts[i],100);
     }
-    raw = result;
   }
-  for (var i = 0; i < 20; i++) {
-    if (hyperLevels[i] > 0 && points.gt(MetaNum.ZERO)) {
-      var ea = hyperEffectArrowCounts[i];
-      raw = MetaNum.arrow(raw, ea, 100);
+  for(var i=0;i<100;i++){
+    if(newLevels[i]>0&&points.gt(MetaNum.ZERO)){
+      raw=raw.mul(new MetaNum(newArrowCounts[i]));
     }
   }
   return raw;
 }
 
+function autobuyBase() {
+  if(hyperLevels[19]>0){
+    for(var i=0;i<7;i++)upgrades[i].buy();
+  }
+}
+
 function buildUI() {
-  var container = document.getElementById('upgrades');
-  for (var i = 0; i < upgrades.length; i++) {
-    var up = upgrades[i];
-    var row = document.createElement('div');
-    row.className = 'u-row';
-    var div = document.createElement('div');
-    div.className = 'upgrade locked';
-    div.id = up.id;
-    div.dataset.idx = i;
-    div.addEventListener('click', (function(idx) {
-      return function() { upgrades[idx].buy(); };
-    })(i));
+  var c=document.getElementById('upgrades');
+  for(var i=0;i<upgrades.length;i++){
+    var up=upgrades[i];
+    var row=document.createElement('div');
+    row.className='u-row';
+    var div=document.createElement('div');
+    div.className='upgrade locked';
+    div.id=up.id;
+    div.addEventListener('click',(function(idx){return function(){upgrades[idx].buy();};})(i));
     row.appendChild(div);
-    if (up.hasBuyMax) {
-      var btn = document.createElement('button');
-      btn.className = 'buymax';
-      btn.textContent = 'Buy Max';
-      btn.dataset.idx = i;
-      btn.addEventListener('click', (function(idx) {
-        return function() { upgrades[idx].buyMax(); };
-      })(i));
+    if(up.hasBuyMax){
+      var btn=document.createElement('button');
+      btn.className='buymax';
+      btn.textContent='Buy Max';
+      btn.addEventListener('click',(function(idx){return function(){upgrades[idx].buyMax();};})(i));
       row.appendChild(btn);
     }
-    container.appendChild(row);
+    c.appendChild(row);
   }
 }
 
 function updateUI() {
-  document.getElementById('points-display').textContent = format(points, 2);
-  document.getElementById('pps-display').textContent = format(getEffectiveGain(), 2) + ' pts/sec';
-  for (var i = 0; i < upgrades.length; i++) {
-    var up = upgrades[i];
-    var el = document.getElementById(up.id);
-    var l = up.level();
-    var c = up.cost();
-    el.textContent = up.label();
-    if (l >= up.max) el.className = 'upgrade maxed';
-    else el.className = points.gte(c) ? 'upgrade' : 'upgrade locked';
-    if (up.hasBuyMax) {
-      el.parentElement.querySelector('.buymax').disabled = (l >= up.max || points.lt(c));
-    }
+  document.getElementById('points-display').textContent=format(points,2);
+  document.getElementById('pps-display').textContent=format(getEffectiveGain(),2)+' pts/sec';
+  for(var i=0;i<upgrades.length;i++){
+    var up=upgrades[i];
+    var el=document.getElementById(up.id);
+    var l=up.level();
+    var c=up.cost();
+    el.textContent=up.label();
+    if(l>=up.max)el.className='upgrade maxed';
+    else el.className=points.gte(c)?'upgrade':'upgrade locked';
+    if(up.hasBuyMax)el.parentElement.querySelector('.buymax').disabled=(l>=up.max||points.lt(c));
   }
 }
 
 function saveGame() {
-  var hyperCopy = [];
-  for (var i = 0; i < 20; i++) hyperCopy.push(hyperLevels[i]);
-  var data = {
-    points: points.toString(),
-    u1Level: upgrades[0]._level,
-    u2Level: upgrades[1]._level,
-    u3Level: upgrades[2]._level,
-    u4Level: u4Level,
-    u5Level: u5Level,
-    u6Level: u6Level,
-    u7Level: u7Level,
-    hyperLevels: hyperCopy
+  var data={
+    points:points.toString(),
+    u1Level:upgrades[0]._level,
+    u2Level:upgrades[1]._level,
+    u3Level:upgrades[2]._level,
+    u4Level:u4Level,
+    u5Level:u5Level,
+    u6Level:u6Level,
+    u7Level:u7Level,
+    hyperLevels:hyperLevels.slice(),
+    newLevels:newLevels.slice()
   };
-  localStorage.setItem('metaIncrementalSave', JSON.stringify(data));
+  localStorage.setItem('metaIncrementalSave',JSON.stringify(data));
 }
 
 function loadGame() {
-  var raw = localStorage.getItem('metaIncrementalSave');
-  if (!raw) return;
-  try {
-    var data = JSON.parse(raw);
-    points = new MetaNum(data.points || '0');
-    upgrades[0]._level = data.u1Level || 0;
-    upgrades[1]._level = data.u2Level || 0;
-    upgrades[2]._level = data.u3Level || 0;
-    u4Level = data.u4Level || 0;
-    u5Level = data.u5Level || 0;
-    u6Level = data.u6Level || 0;
-    u7Level = data.u7Level || 0;
-    if (data.hyperLevels) {
-      for (var i = 0; i < 20; i++) hyperLevels[i] = data.hyperLevels[i] || 0;
-    }
-  } catch(e) {}
+  var raw=localStorage.getItem('metaIncrementalSave');
+  if(!raw)return;
+  try{
+    var data=JSON.parse(raw);
+    points=new MetaNum(data.points||'0');
+    upgrades[0]._level=data.u1Level||0;
+    upgrades[1]._level=data.u2Level||0;
+    upgrades[2]._level=data.u3Level||0;
+    u4Level=data.u4Level||0;
+    u5Level=data.u5Level||0;
+    u6Level=data.u6Level||0;
+    u7Level=data.u7Level||0;
+    if(data.hyperLevels)for(var i=0;i<20;i++)hyperLevels[i]=data.hyperLevels[i]||0;
+    if(data.newLevels)for(var i=0;i<100;i++)newLevels[i]=data.newLevels[i]||0;
+  }catch(e){}
 }
 
 function resetGame() {
-  if (!confirm('Reset all data?')) return;
+  if(!confirm('Reset all data?'))return;
   localStorage.removeItem('metaIncrementalSave');
-  points = new MetaNum(0);
-  upgrades[0]._level = 0;
-  upgrades[1]._level = 0;
-  upgrades[2]._level = 0;
-  u4Level = 0;
-  u5Level = 0;
-  u6Level = 0;
-  u7Level = 0;
-  for (var i = 0; i < 20; i++) hyperLevels[i] = 0;
+  points=new MetaNum(0);
+  upgrades[0]._level=0;upgrades[1]._level=0;upgrades[2]._level=0;
+  u4Level=0;u5Level=0;u6Level=0;u7Level=0;
+  for(var i=0;i<20;i++)hyperLevels[i]=0;
+  for(var i=0;i<100;i++)newLevels[i]=0;
   updateUI();
 }
 
 function exportSave() {
-  var data = localStorage.getItem('metaIncrementalSave');
-  if (!data) { alert('No save data.'); return; }
-  var encoded = btoa(data);
-  navigator.clipboard.writeText(encoded).then(function() { alert('Save copied to clipboard!'); });
+  var data=localStorage.getItem('metaIncrementalSave');
+  if(!data){alert('No save data.');return;}
+  navigator.clipboard.writeText(btoa(data)).then(function(){alert('Save copied to clipboard!');});
 }
 
 function importSave() {
-  var input = prompt('Paste your save data:');
-  if (!input) return;
-  try {
-    var decoded = atob(input);
-    JSON.parse(decoded);
-    localStorage.setItem('metaIncrementalSave', decoded);
-    loadGame();
-    updateUI();
-    alert('Save imported!');
-  } catch(e) { alert('Invalid save data.'); }
+  var input=prompt('Paste your save data:');
+  if(!input)return;
+  try{var decoded=atob(input);JSON.parse(decoded);localStorage.setItem('metaIncrementalSave',decoded);loadGame();updateUI();alert('Save imported!');}catch(e){alert('Invalid save data.');}
 }
 
 function buildButtons() {
-  var container = document.getElementById('buttons');
-  var b1 = document.createElement('button');
-  b1.textContent = 'Export';
-  b1.addEventListener('click', exportSave);
-  container.appendChild(b1);
-  var b2 = document.createElement('button');
-  b2.textContent = 'Import';
-  b2.addEventListener('click', importSave);
-  container.appendChild(b2);
-  var b3 = document.createElement('button');
-  b3.textContent = 'Reset Data';
-  b3.addEventListener('click', resetGame);
-  container.appendChild(b3);
+  var c=document.getElementById('buttons');
+  var b1=document.createElement('button');b1.textContent='Export';b1.addEventListener('click',exportSave);c.appendChild(b1);
+  var b2=document.createElement('button');b2.textContent='Import';b2.addEventListener('click',importSave);c.appendChild(b2);
+  var b3=document.createElement('button');b3.textContent='Reset Data';b3.addEventListener('click',resetGame);c.appendChild(b3);
 }
 
 function gameLoop(now) {
-  var dt = (now - lastTime) / 1000;
-  lastTime = now;
-  points = points.add(getEffectiveGain().mul(new MetaNum(dt)));
+  var dt=(now-lastTime)/1000;
+  lastTime=now;
+  autobuyBase();
+  points=points.add(getEffectiveGain().mul(new MetaNum(dt)));
   updateUI();
   saveGame();
   requestAnimationFrame(gameLoop);
