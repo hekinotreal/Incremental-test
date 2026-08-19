@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metanum Test Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MetaNum Test Interface</h1>
+
+        <h2>test in console</h2>
+
+<button id="runTestBtn">run test_mixed.js</button>
+<div id="consoleOutput" style="margin-top: 20px; padding: 10px; background-color: #f0f0f0; border-radius: 4px; min-height: 100px; font-family: monospace; font-size: 14px; white-space: pre-wrap;"></div>
+
+<script>
+    document.getElementById('runTestBtn').addEventListener('click', function() {
+        const outputDiv = document.getElementById('consoleOutput');
+        outputDiv.innerHTML = '';
+        
+        // save original console.log
+        const originalLog = console.log;
+        
+        // rewrite console.log to output to the div
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logEntry = document.createElement('div');
+            logEntry.textContent = args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return String(arg);
+            }).join(' ');
+            outputDiv.appendChild(logEntry);
+        };
+        
+        // load test_mixed.js
+        const script = document.createElement('script');
+        script.src = './test_mixed.js';
+        script.onload = function() {
+            console.log('test_mixed.js loaded');
+        };
+        script.onerror = function() {
+            console.log('Failed to load test_mixed.js');
+            console.log = originalLog;
+        };
+        document.head.appendChild(script);
+    });
+</script>
+    </div>
+    <script src="./metanum.js"></script>
+    <script src="./format-metanum.js"></script>
+    <script>
+        // test in console
+        console.log('=== MetaNum Library by dlsdl ===');
+
+    </script>
+</body>
+</html>

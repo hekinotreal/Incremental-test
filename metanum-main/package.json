@@ -1,0 +1,23 @@
+{
+  "name": "metanum",
+  "version": "1.4.0",
+  "description": "A javascript library that handles numbers as large as f_ε₀(9e15)",
+  "main": "metanum.js",
+  "scripts": {
+    "test": "node test.js",
+    "example": "node basic-usage.js"
+  },
+  "keywords": [
+    "large-numbers",
+    "hardy-hierarchy",
+    "ordinal-arithmetic",
+    "hyper-operations",
+    "mathematics"
+  ],
+  "author": "dlsdl",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dlsdl/metanum.js/issues"
+  },
+  "homepage": "https://github.com/dlsdl/metanum.js"
+}
