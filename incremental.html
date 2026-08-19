@@ -195,13 +195,20 @@ for(var i=0;i<100;i++){
 }
 
 var tetrArrowCounts=[];
+var tetrYValues=[];
 var tetrCosts=[];
 var tetrLevels=[];
 (function(){
-  var base=new MetaNum(10);
   for(var i=0;i<100;i++){
     tetrLevels.push(0);
-    tetrArrowCounts.push(base.tetr(new MetaNum(i+2)));
+    var arrows=Math.floor(2+i*23/100);
+    var tier=i-Math.floor((arrows-2)*100/23);
+    var tierSize=Math.floor(100/23);
+    if(tierSize<1)tierSize=1;
+    var yPow=Math.floor(tier*9/(tierSize-1||1))+1;
+    var y=new MetaNum(Math.pow(10,yPow));
+    tetrArrowCounts.push(arrows);
+    tetrYValues.push(y);
   }
   for(var i=0;i<50;i++){
     tetrCosts.push(new MetaNum([[10000+i*500,2]]));
@@ -217,7 +224,7 @@ for(var i=0;i<100;i++){
       id:'upgrade'+(128+idx), name:'Upgrade-'+(128+idx), max:1, _level:0,
       level:function(){return tetrLevels[idx];},
       cost:function(){return tetrLevels[idx]<1?tetrCosts[idx]:MetaNum.POSITIVE_INFINITY;},
-      effect:function(){return '^^['+format(tetrArrowCounts[idx],0)+']';},
+      effect:function(){return '↑'+tetrArrowCounts[idx]+'(y'+format(tetrYValues[idx],0)+')';},
       buy:function(){var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);tetrLevels[idx]++;},
       label:function(){var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts');}
     });
@@ -251,7 +258,7 @@ function getEffectiveGain() {
   }
   for(var i=0;i<100;i++){
     if(tetrLevels[i]>0&&points.gt(MetaNum.ZERO)){
-      raw=MetaNum.arrow(raw,tetrArrowCounts[i],100);
+      raw=MetaNum.arrow(raw,tetrArrowCounts[i],tetrYValues[i]);
     }
   }
   return raw;
