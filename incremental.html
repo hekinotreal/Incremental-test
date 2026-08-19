@@ -223,9 +223,8 @@ function getEffectiveGain() {
 }
 
 function autobuyBase() {
-  var active=hyperLevels[19]>0||newLevels[52]>0;
-  if(active){
-    for(var i=0;i<7;i++)upgrades[i].buy();
+  if(hyperLevels[19]>0||newLevels[52]>0){
+    for(var i=0;i<upgrades.length;i++)upgrades[i].buy();
   }
 }
 
