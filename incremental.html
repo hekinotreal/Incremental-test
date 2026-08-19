@@ -194,6 +194,36 @@ for(var i=0;i<100;i++){
   })(i);
 }
 
+var tetrArrowCounts=[];
+var tetrCosts=[];
+var tetrLevels=[];
+(function(){
+  var base=new MetaNum(10);
+  for(var i=0;i<100;i++){
+    tetrLevels.push(0);
+    tetrArrowCounts.push(base.tetr(new MetaNum(i+2)));
+  }
+  for(var i=0;i<50;i++){
+    tetrCosts.push(new MetaNum([[10000+i*500,2]]));
+  }
+  for(var i=0;i<50;i++){
+    tetrCosts.push(new MetaNum([[35000+i*1000,2]]));
+  }
+})();
+
+for(var i=0;i<100;i++){
+  (function(idx){
+    reg({
+      id:'upgrade'+(128+idx), name:'Upgrade-'+(128+idx), max:1, _level:0,
+      level:function(){return tetrLevels[idx];},
+      cost:function(){return tetrLevels[idx]<1?tetrCosts[idx]:MetaNum.POSITIVE_INFINITY;},
+      effect:function(){return '^^['+format(tetrArrowCounts[idx],0)+']';},
+      buy:function(){var l=this.level();if(l>=this.max)return;var c=this.cost();if(points.lt(c))return;points=points.sub(c);tetrLevels[idx]++;},
+      label:function(){var l=this.level();var c=this.cost();return this.name+' ['+l+'/'+this.max+'] - '+this.effect()+' effect - '+(l>=this.max?'MAXED':'Cost: '+format(c,0)+' pts');}
+    });
+  })(i);
+}
+
 function getEffectiveGain() {
   var mult=new MetaNum(Math.pow(3,upgrades[0].level()));
   var raw=baseRate.mul(mult);
@@ -217,6 +247,11 @@ function getEffectiveGain() {
   for(var i=0;i<100;i++){
     if(newLevels[i]>0&&points.gt(MetaNum.ZERO)){
       raw=MetaNum.arrow(raw,new MetaNum(newArrowCounts[i]),100);
+    }
+  }
+  for(var i=0;i<100;i++){
+    if(tetrLevels[i]>0&&points.gt(MetaNum.ZERO)){
+      raw=MetaNum.arrow(raw,tetrArrowCounts[i],100);
     }
   }
   return raw;
@@ -276,7 +311,8 @@ function saveGame() {
     u6Level:u6Level,
     u7Level:u7Level,
     hyperLevels:hyperLevels.slice(),
-    newLevels:newLevels.slice()
+    newLevels:newLevels.slice(),
+    tetrLevels:tetrLevels.slice()
   };
   localStorage.setItem('metaIncrementalSave',JSON.stringify(data));
 }
@@ -296,6 +332,7 @@ function loadGame() {
     u7Level=data.u7Level||0;
     if(data.hyperLevels)for(var i=0;i<20;i++)hyperLevels[i]=data.hyperLevels[i]||0;
     if(data.newLevels)for(var i=0;i<100;i++)newLevels[i]=data.newLevels[i]||0;
+    if(data.tetrLevels)for(var i=0;i<100;i++)tetrLevels[i]=data.tetrLevels[i]||0;
   }catch(e){}
 }
 
@@ -307,6 +344,7 @@ function resetGame() {
   u4Level=0;u5Level=0;u6Level=0;u7Level=0;
   for(var i=0;i<20;i++)hyperLevels[i]=0;
   for(var i=0;i<100;i++)newLevels[i]=0;
+  for(var i=0;i<100;i++)tetrLevels[i]=0;
   updateUI();
 }
 
